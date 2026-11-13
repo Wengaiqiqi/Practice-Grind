@@ -22,3 +22,13 @@ class ModelConnectionTestResponse(BaseModel):
     provider: str
     model: str
     message: str | None = None
+
+
+class ModelListRequest(BaseModel):
+    provider: str = Field(min_length=1, max_length=80)
+    base_url: str = Field(min_length=1, max_length=500)
+    api_key: str | None = Field(default=None, min_length=1, max_length=2000)
+
+
+class ModelListResponse(BaseModel):
+    models: list[str]

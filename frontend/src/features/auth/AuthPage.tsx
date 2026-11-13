@@ -1,8 +1,8 @@
 import { FormEvent, useState } from 'react';
-import { BookOpenCheck } from 'lucide-react';
 import { getMe, login, register } from '../../api/client';
 import type { User } from '../../api/types';
 import { Field } from '../../components/Field';
+import { BrandLogo } from '../../components/BrandLogo';
 import { persistToken } from './authStore';
 
 interface AuthPageProps {
@@ -60,9 +60,7 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
 
       <section className="relative z-10 w-full max-w-[400px] p-8 sm:p-10 border border-white/60 rounded-3xl bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] transition-all duration-300" aria-labelledby="auth-title">
         <div className="flex flex-col items-center gap-2 mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-lg shadow-teal-500/30 mb-3 transform transition-transform hover:scale-105">
-            <BookOpenCheck size={28} />
-          </div>
+          <BrandLogo size={56} className="mb-3" />
           <h1 id="auth-title" className="m-0 text-2xl font-extrabold text-slate-800 tracking-tight">
             {isRegistering ? '创建你的账号' : '欢迎回来'}
           </h1>

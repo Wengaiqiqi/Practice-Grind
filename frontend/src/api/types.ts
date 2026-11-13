@@ -184,6 +184,12 @@ export interface ModelSettings {
   using_global: boolean;
 }
 
+export interface ModelListRequest {
+  provider: string;
+  base_url: string;
+  api_key?: string;
+}
+
 export interface ModelSettingsPayload {
   provider: string;
   base_url: string;

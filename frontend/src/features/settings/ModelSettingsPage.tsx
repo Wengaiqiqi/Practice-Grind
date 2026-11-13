@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { PlugZap, Save, Settings2, Info } from 'lucide-react';
 
-import { getModelSettings, saveModelSettings, testModelSettings } from '../../api/client';
+import { fetchModelList, getModelSettings, saveModelSettings, testModelSettings } from '../../api/client';
 import type { ModelSettings } from '../../api/types';
-import { Field } from '../../components/Field';
+import { ModelConfigFields } from '../../components/ModelConfigFields';
 import { StatusBadge } from '../../components/StatusBadge';
 
 export function ModelSettingsPage() {
   const [settings, setSettings] = useState<ModelSettings | null>(null);
   const [provider, setProvider] = useState('openai-compatible');
   const [baseUrl, setBaseUrl] = useState('https://api.openai.com/v1');
-  const [model, setModel] = useState('gpt-4o-mini');
+  const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -26,7 +26,7 @@ export function ModelSettingsPage() {
         setSettings(current);
         setProvider(current.provider ?? 'openai-compatible');
         setBaseUrl(current.base_url ?? 'https://api.openai.com/v1');
-        setModel(current.model ?? 'gpt-4o-mini');
+        setModel(current.model ?? '');
         // If user has their own key, show custom form
         if (current.has_api_key) {
           setShowCustom(true);
@@ -130,7 +130,7 @@ export function ModelSettingsPage() {
                 {isTesting ? '正在测试' : '测试连接'}
               </button>
               <button
-                className="inline-flex items-center gap-2 min-h-[36px] px-3.5 rounded-lg border border-teal-600 bg-teal-600 text-white text-[13px] font-bold hover:bg-teal-700"
+                className="inline-flex items-center gap-2 min-h-[36px] px-3.5 rounded-lg border border-black bg-black text-white text-[13px] font-bold hover:bg-zinc-800"
                 type="button"
                 onClick={() => setShowCustom(true)}
               >
@@ -160,27 +160,11 @@ export function ModelSettingsPage() {
               {settings?.has_api_key ? '已配置个人密钥' : '等待配置'}
             </StatusBadge>
           </div>
-          <form className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5 p-5" aria-label="模型设置" onSubmit={handleSave}>
-            <div className="grid gap-1.5">
-              <label className="text-[13px] font-bold text-slate-700">服务商</label>
-              <select
-                className="w-full min-h-[38px] px-3 py-2 border border-slate-300 rounded-lg text-slate-800 bg-white outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat pr-10"
-                value={provider}
-                onChange={(event) => setProvider(event.target.value)}
-              >
-                <option value="openai-compatible">OpenAI 兼容接口</option>
-                <option value="openai">OpenAI</option>
-              </select>
-            </div>
-            <Field label="Base URL" type="url" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://api.openai.com/v1" required />
-            <Field label="模型" value={model} onChange={(event) => setModel(event.target.value)} placeholder="gpt-4o-mini" required />
-            <Field
-              label="API Key"
-              type="password"
-              autoComplete="new-password"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              placeholder={settings?.has_api_key ? '已保存，留空则保持不变' : '输入你的 API Key'}
+          <form className="grid grid-cols-1 gap-5 p-5 sm:p-6" aria-label="模型设置" onSubmit={handleSave}>
+            <ModelConfigFields
+              provider={provider} baseUrl={baseUrl} apiKey={apiKey} model={model}
+              setProvider={setProvider} setBaseUrl={setBaseUrl} setApiKey={setApiKey} setModel={setModel}
+              hasSavedKey={Boolean(settings?.has_api_key || settings?.platform_available)} fetchModels={fetchModelList}
             />
             {message ? (
               <div
@@ -205,7 +189,7 @@ export function ModelSettingsPage() {
                 {isTesting ? '正在测试' : '测试连接'}
               </button>
               <button
-                className="inline-flex items-center gap-2 min-h-[36px] min-w-[132px] px-3.5 rounded-lg border border-teal-600 bg-teal-600 text-white text-[13px] font-bold hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 min-h-[36px] min-w-[132px] px-3.5 rounded-lg border border-black bg-black text-white text-[13px] font-bold hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="submit"
                 disabled={isSaving || isTesting}
               >

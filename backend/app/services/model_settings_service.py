@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.models.global_settings import GlobalSettings
 from app.models.user import User, UserModelSettings
-from app.schemas.model_settings import ModelSettingsResponse, ModelSettingsUpdate
+from app.schemas.model_settings import ModelListRequest, ModelSettingsResponse, ModelSettingsUpdate
 from app.services.llm_client import LLMConfig
 
 logger = logging.getLogger(__name__)
@@ -170,6 +170,74 @@ def resolve_model_config(db: Session, user: User) -> ResolvedModelConfig:
         )
 
     raise BadRequestError("未配置模型 API Key，请先在引擎设置中配置")
+
+
+def list_available_models(
+    db: Session, user: User, payload: ModelListRequest, *, global_scope: bool = False
+) -> dict[str, list[str]]:
+    import httpx
+
+    base_url = payload.base_url.strip().rstrip("/")
+    provider = payload.provider.strip()
+    if provider not in {"openai", "openai-compatible"}:
+        raise BadRequestError("暂不支持此协议")
+    validate_base_url(base_url)
+    api_key = (payload.api_key or "").strip()
+
+    # A stored credential may only be reused with its saved service address.
+    # Fetching a model list must not save a partial form or expose the secret.
+    if not api_key:
+        candidates: list[tuple[str, str, str]] = []
+        if not global_scope:
+            personal = db.scalar(select(UserModelSettings).where(UserModelSettings.user_id == user.id))
+            if personal and personal.encrypted_api_key:
+                candidates.append((personal.provider, personal.base_url, personal.encrypted_api_key))
+        if global_scope or not candidates:
+            global_config = _get_global_settings_batch(db, ["model_provider", "model_base_url", "model_api_key"])
+            if global_config.get("model_api_key"):
+                candidates.append((global_config.get("model_provider", ""), global_config.get("model_base_url", ""), global_config["model_api_key"]))
+        for saved_provider, saved_url, encrypted in candidates:
+            if saved_provider == provider and saved_url.strip().rstrip("/") == base_url:
+                try:
+                    api_key = decrypt_api_key(encrypted)
+                except Exception:
+                    raise BadRequestError("已保存的密钥无法读取，请重新填写 Key") from None
+                break
+        if not api_key and not global_scope and not candidates:
+            env = get_settings()
+            if env.model_provider == provider and env.model_base_url.rstrip("/") == base_url:
+                api_key = env.model_api_key
+        if not api_key:
+            raise BadRequestError("请填写 Key；修改协议或 URL 后需要重新填写密钥")
+
+    try:
+        response = httpx.get(
+            f"{base_url}/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=15,
+            follow_redirects=False,
+        )
+        if response.status_code in {401, 403}:
+            raise BadRequestError("密钥无效或无权获取模型列表，请检查 Key")
+        if response.status_code == 404:
+            raise BadRequestError("该 URL 不支持模型列表，请检查地址，或手动填写模型名称")
+        if not 200 <= response.status_code < 300:
+            raise BadRequestError(f"获取模型列表失败（HTTP {response.status_code}），请稍后重试或手动填写")
+        body = response.json()
+    except httpx.TimeoutException:
+        raise BadRequestError("获取模型列表超时，请稍后重试或手动填写") from None
+    except httpx.HTTPError:
+        raise BadRequestError("无法连接模型服务，请检查 URL 或手动填写模型名称") from None
+    except ValueError:
+        raise BadRequestError("服务商返回的模型列表格式无效，请手动填写模型名称") from None
+    data = body.get("data") if isinstance(body, dict) else None
+    if not isinstance(data, list):
+        raise BadRequestError("服务商未返回兼容的模型列表，请手动填写模型名称")
+    models = sorted({
+        item["id"].strip() for item in data
+        if isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"].strip()
+    })
+    return {"models": models}
 
 
 def test_model_connection(config: ResolvedModelConfig) -> dict[str, object]:

@@ -15,6 +15,7 @@ import type {
   ModelConnectionTestResponse,
   ModelSettings,
   ModelSettingsPayload,
+  ModelListRequest,
   PracticeAnswer,
   PracticeAnswerPayload,
   PracticeSession,
@@ -297,6 +298,14 @@ export function testModelSettings(): Promise<ModelConnectionTestResponse> {
   return apiRequest<ModelConnectionTestResponse>('/api/model-settings/test', {
     method: 'POST'
   });
+}
+
+export function fetchModelList(payload: ModelListRequest): Promise<{ models: string[] }> {
+  return apiRequest('/api/model-settings/models', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function fetchGlobalModelList(payload: ModelListRequest): Promise<{ models: string[] }> {
+  return apiRequest('/api/admin/settings/models', { method: 'POST', body: JSON.stringify(payload) });
 }
 
 // ── Admin ─────────────────────────────────────────────────────────

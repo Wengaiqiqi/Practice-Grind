@@ -6,6 +6,8 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.model_settings import (
     ModelConnectionTestResponse,
+    ModelListRequest,
+    ModelListResponse,
     ModelSettingsResponse,
     ModelSettingsUpdate,
 )
@@ -32,3 +34,12 @@ def update_settings(
 def test_settings(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> ModelConnectionTestResponse:
     config = model_settings_service.resolve_model_config(db, current_user)
     return model_settings_service.test_model_connection(config)
+
+
+@router.post("/models", response_model=ModelListResponse)
+def list_models(
+    payload: ModelListRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return model_settings_service.list_available_models(db, current_user, payload)

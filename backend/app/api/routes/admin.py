@@ -11,7 +11,9 @@ from app.services.model_settings_service import (
     decrypt_api_key,
     encrypt_api_key,
     test_model_connection,
+    list_available_models,
 )
+from app.schemas.model_settings import ModelListRequest, ModelListResponse
 from app.models.user import User
 from app.schemas.admin import AdminUserUpdate, ChangePasswordRequest, GlobalSettingsResponse, GlobalSettingsUpdate
 from app.schemas.user import UserResponse
@@ -167,3 +169,12 @@ def test_global_settings(
         api_key=api_key,
     )
     return test_model_connection(config)
+
+
+@router.post("/settings/models", response_model=ModelListResponse)
+def list_global_models(
+    payload: ModelListRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+):
+    return list_available_models(db, admin, payload, global_scope=True)

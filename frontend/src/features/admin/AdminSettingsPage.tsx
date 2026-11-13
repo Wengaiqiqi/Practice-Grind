@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { PlugZap, Save, Settings2 } from 'lucide-react';
-import { getGlobalSettings, saveGlobalSettings, testGlobalSettings } from '../../api/client';
+import { ModelConfigFields } from '../../components/ModelConfigFields';
+import { fetchGlobalModelList, getGlobalSettings, saveGlobalSettings, testGlobalSettings } from '../../api/client';
 import type { GlobalSettings as GlobalSettingsType } from '../../api/types';
 
 export function AdminSettingsPage() {
   const [settings, setSettings] = useState<GlobalSettingsType | null>(null);
   const [provider, setProvider] = useState('openai-compatible');
   const [baseUrl, setBaseUrl] = useState('https://api.openai.com/v1');
-  const [model, setModel] = useState('gpt-4o-mini');
+  const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,7 +23,7 @@ export function AdminSettingsPage() {
         setSettings(s);
         setProvider(s.model_provider || 'openai-compatible');
         setBaseUrl(s.model_base_url || 'https://api.openai.com/v1');
-        setModel(s.model_name || 'gpt-4o-mini');
+        setModel(s.model_name || '');
       })
       .catch((e) => { if (isMounted) setMessage({ tone: 'danger', text: e instanceof Error ? e.message : '加载失败' }); });
     return () => { isMounted = false; };
@@ -69,8 +70,8 @@ export function AdminSettingsPage() {
         <p className="mt-2 text-[14px] text-zinc-500 font-medium">配置系统默认的模型服务，未自定义配置的用户将使用此设置。</p>
       </header>
 
-      <section className="bg-white rounded-xl shadow-sm border border-black/[0.06] overflow-hidden">
-        <div className="p-5 border-b border-black/[0.06] flex items-center gap-2 bg-zinc-50/50">
+      <section className="bg-white rounded-xl shadow-sm border border-black/[0.06]">
+        <div className="p-5 rounded-t-xl border-b border-black/[0.06] flex items-center gap-2 bg-zinc-50/50">
           <Settings2 size={16} className="text-black" />
           <h3 className="text-[14px] font-bold text-black uppercase tracking-widest">默认模型配置</h3>
           {settings?.has_api_key && (
@@ -81,53 +82,11 @@ export function AdminSettingsPage() {
         </div>
 
         <form className="p-6 md:p-8" onSubmit={handleSave}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="grid gap-2">
-              <label className="text-[13px] font-semibold text-zinc-700">服务商</label>
-              <select
-                className="w-full h-[40px] px-3 appearance-none bg-white border border-black/[0.1] rounded-md text-[13px] font-semibold text-black shadow-sm focus:border-black focus:ring-1 focus:ring-black transition-all cursor-pointer"
-                value={provider}
-                onChange={(e) => setProvider(e.target.value)}
-              >
-                <option value="openai-compatible">OpenAI 兼容接口</option>
-                <option value="openai">OpenAI</option>
-              </select>
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-[13px] font-semibold text-zinc-700">Base URL</label>
-              <input
-                type="url"
-                className="w-full h-[40px] px-3 bg-white border border-black/[0.1] rounded-md text-[13px] font-semibold text-black shadow-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="https://api.openai.com/v1"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-[13px] font-semibold text-zinc-700">模型</label>
-              <input
-                type="text"
-                className="w-full h-[40px] px-3 bg-white border border-black/[0.1] rounded-md text-[13px] font-semibold text-black shadow-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                placeholder="gpt-4o-mini"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-[13px] font-semibold text-zinc-700">API Key</label>
-              <input
-                type="password"
-                className="w-full h-[40px] px-3 bg-white border border-black/[0.1] rounded-md text-[13px] font-semibold text-black shadow-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={settings?.has_api_key ? '已保存，留空则保持不变' : '输入 API Key'}
-                autoComplete="new-password"
-              />
-            </div>
-          </div>
+          <ModelConfigFields
+            provider={provider} baseUrl={baseUrl} apiKey={apiKey} model={model}
+            setProvider={setProvider} setBaseUrl={setBaseUrl} setApiKey={setApiKey} setModel={setModel}
+            hasSavedKey={Boolean(settings?.has_api_key)} fetchModels={fetchGlobalModelList}
+          />
 
           {message && (
             <div className={`mt-6 px-3 py-2.5 border rounded-md text-[13px] font-medium ${

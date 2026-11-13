@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     storage_root: str = "storage"
     model_provider: str = "openai-compatible"
     model_base_url: str = "https://api.openai.com/v1"
-    model_name: str = "gpt-4.1-mini"
+    model_name: str = ""
     model_api_key: str = ""
     api_key_encryption_secret: str = "change-me-32-byte-minimum-secret"
     cors_origins: str = "*"

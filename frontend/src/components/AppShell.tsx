@@ -7,7 +7,6 @@ import {
   LogOut,
   NotebookTabs,
   Target,
-  Command,
   Shield,
   Users,
   Settings2,
@@ -18,6 +17,7 @@ import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { User } from '../api/types';
 import { cn } from '../lib/utils';
+import { BrandLogo } from './BrandLogo';
 
 interface NavItem {
   to: string;
@@ -57,9 +57,7 @@ export function AppShell({ user, onLogout, children }: AppShellProps) {
         aria-label="主导航"
       >
         <div className="flex items-center gap-3 px-6 pt-8 pb-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-md bg-black text-white shadow-sm ring-1 ring-black/10">
-            <Command size={14} />
-          </div>
+          <BrandLogo size={28} />
           <div>
             <strong className="block text-[14px] font-semibold text-black tracking-tight leading-none">W&W刷题</strong>
             <span className="block text-[11px] text-zinc-500 font-medium mt-1">Study Workspace</span>
@@ -168,9 +166,7 @@ export function AppShell({ user, onLogout, children }: AppShellProps) {
       {/* Mobile Nav Header */}
       <div className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-xl border-b border-black/[0.06]">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-6 h-6 rounded bg-black text-white">
-            <Command size={12} />
-          </div>
+          <BrandLogo size={24} />
           <strong className="text-[13px] font-semibold text-black tracking-tight">W&W刷题</strong>
         </div>
         <button className="text-zinc-500" onClick={onLogout}><LogOut size={16} /></button>

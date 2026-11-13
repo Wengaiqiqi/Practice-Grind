@@ -110,7 +110,7 @@ export function ImportJobsPage({ jobs, banks, onDelete }: ImportJobsPageProps) {
         ) : (
           <div className="py-16">
             <EmptyState
-              title="No Import Jobs"
+              title="暂无导入任务"
               description="选择题库并上传文档后，系统会生成可审核的题目草稿。"
               icon={<FilePlus size={48} className="text-zinc-200" />}
             />
